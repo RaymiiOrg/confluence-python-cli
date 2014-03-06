@@ -274,7 +274,7 @@ def Content(args):
         try:
             content = open(args.file, 'rb').read()
         except:
-            error = "Cannot open file: ", filename
+            error = "Cannot open file: ", args.file
             raise
     elif args.stdin:
         content = sys.stdin.read()
