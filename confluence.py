@@ -205,6 +205,9 @@ def Parser():
     files_updatepage.add_argument("-f", "--file", help="Read content from this file")
     files_updatepage.add_argument("-S", "--stdin", help="Read content from STDIN", action="store_true")
 
+    parser_listpages = subparsers.add_parser('listpages', help='List pages in one or all spaces')
+    parser_listpages.add_argument("-s", "--spacekey", help="Space Key", default="")
+
     parser_removepage = subparsers.add_parser('removepage', help='Remove a page')
     parser_removepage.add_argument("-n", "--name", help="Page name", required=True)
     parser_removepage.add_argument("-s", "--spacekey", help="Space Key", required=True)
@@ -212,6 +215,10 @@ def Parser():
     parser_getpage = subparsers.add_parser('getpagecontent', help='Get page content')
     parser_getpage.add_argument("-n", "--name", help="Page name", required=True)
     parser_getpage.add_argument("-s", "--spacekey", help="Space Key", required=True)
+
+    parser_getpagesummary = subparsers.add_parser('getpagesummary', help='Get page summary')
+    parser_getpagesummary.add_argument("-s", "--spacekey", help="Space Key", required=True)
+    parser_getpagesummary.add_argument("-n", "--name", help="Page name", required=True)
 
     parser_listspaces = subparsers.add_parser('listspaces', help='List all spaces')
 
@@ -309,6 +316,22 @@ def Actions(token,xml_server,args,content):
         elif args.action == "getpagecontent":
             get_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content).get_content()
             print(get_page)
+
+        elif args.action == "getpagesummary":
+            page = ConfluencePage(token,xml_server,args.name,args.spacekey,content).get()
+            print(("%s, %s, %s, %s, %s") % (
+             page['id'], page['space'], page['parentId'], page['title'], page['url']))
+
+        elif args.action == "listpages":
+            if args.spacekey == "":
+                spaces = ConfluenceSpace(token,xml_server).get_all()
+            else:
+                spaces = [ConfluenceSpace(token,xml_server).get_by_key(args.spacekey)]
+            for space in spaces:
+                all_pages = ConfluenceSpace(token,xml_server).get_all_pages(space['key'])
+                for page in all_pages:
+                    print(("%s, %s, %s, %s, %s") % (
+                     page['id'], page['space'], page['parentId'], page['title'], page['url']))
        
         elif args.action == "removepage":
             removed_page = ConfluencePage(token,xml_server,args.name,args.spacekey,"").remove()
