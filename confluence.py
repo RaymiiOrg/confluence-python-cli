@@ -216,6 +216,10 @@ def Parser():
     parser_getpage.add_argument("-n", "--name", help="Page name", required=True)
     parser_getpage.add_argument("-s", "--spacekey", help="Space Key", required=True)
 
+    parser_getpagesummary = subparsers.add_parser('getpagesummary', help='Get page summary')
+    parser_getpagesummary.add_argument("-s", "--spacekey", help="Space Key", required=True)
+    parser_getpagesummary.add_argument("-n", "--name", help="Page name", required=True)
+
     parser_listspaces = subparsers.add_parser('listspaces', help='List all spaces')
 
     parser_addspace = subparsers.add_parser('addspace', help='Add a space')
@@ -312,6 +316,11 @@ def Actions(token,xml_server,args,content):
         elif args.action == "getpagecontent":
             get_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content).get_content()
             print(get_page)
+
+        elif args.action == "getpagesummary":
+            page = ConfluencePage(token,xml_server,args.name,args.spacekey,content).get()
+            print(("%s, %s, %s, %s, %s") % (
+             page['id'], page['space'], page['parentId'], page['title'], page['url']))
 
         elif args.action == "listpages":
             if args.spacekey == "":
