@@ -331,12 +331,12 @@ def Actions(token,xml_server,args,content):
             logger.debug('Command: "addpage", args.name = "{}", args.label = "{}"'.format(
                 args.name, args.label))
             new_page = ConfluencePage(
-                token,xml_server,args.name,args.spacekey,content,args.label)
+                token,xml_server,args.name,args.spacekey,content,label=args.label)
             new_page.add(args.parentpage)
             print(new_page.get()["url"])
    
         elif args.action == "updatepage":
-            update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,args.label)
+            update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,label=args.label)
             update_page.update(content,args.parentpage)
             update_page.set_label()
             print(update_page.get()['url'])
