@@ -14,7 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, xmlrpclib, argparse, string
+import sys, xmlrpclib, argparse, string, logging
+
+#
+# Logging
+#
+
+logger = logging.getLogger(__name__.rpartition('.')[0])
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(levelname)s: [%(name)s] %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 
 class ConfluenceSpace(object):
     def __init__(self, token, server):
@@ -114,8 +127,13 @@ class ConfluencePage(object):
         self.spaceKey = spaceKey
         self.content = content
         self.label = label
+        self.logger = logging.getLogger(
+            __name__ + '.'+ self.__class__.__name__
+        )
+        self.logger.debug('Creating a new instance (name="{}", label="{}")'.format(name, label))
 
     def add(self,parent_id=0,content=""):
+        self.logger.debug("Add page '{}'; label = [{}]".format(self.name, self.label))
         if content:
             self.content = content 
         self.parent_id = parent_id
@@ -156,7 +174,11 @@ class ConfluencePage(object):
 
     def set_label(self):
         self.page_id = self.get_id()
-        self.server.confluence2.addLabelByName(self.token, self.label, self.page_id) 
+        self.logger.debug("Set label '{}' on page {}".format(
+            self.label, self.page_id))
+        if not self.server.confluence2.addLabelByName(self.token, self.label, self.page_id):
+            self.logger.debug("Unable to set label '{}' on page ID {}".format(
+                self.label, self.page_id))
 
     def get_content(self):
         return self.get()['content']
@@ -185,6 +207,7 @@ def Parser():
     parser.add_argument("-w", "--wikiurl", help="Wiki URL (only FQDN, no / and such)", required=True)
     parser.add_argument("-u", "--username", help="Login Username", required=True)
     parser.add_argument("-p", "--password", help="Login Password", required=True)
+    parser.add_argument("-v", "--verbose", help="Enable debug logging", action="store_true")
     subparsers = parser.add_subparsers(dest="action")
     
     parser_addpage = subparsers.add_parser('addpage', help='Add a page')
@@ -305,12 +328,15 @@ def Actions(token,xml_server,args,content):
 
     try:
         if args.action == "addpage":
-            new_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.label)
+            logger.debug('Command: "addpage", args.name = "{}", args.label = "{}"'.format(
+                args.name, args.label))
+            new_page = ConfluencePage(
+                token,xml_server,args.name,args.spacekey,content,label=args.label)
             new_page.add(args.parentpage)
             print(new_page.get()["url"])
    
         elif args.action == "updatepage":
-            update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,args.label)
+            update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,label=args.label)
             update_page.update(content,args.parentpage)
             update_page.set_label()
             print(update_page.get()['url'])
@@ -422,6 +448,10 @@ def Actions(token,xml_server,args,content):
 
 def main():
     args = Parser()
+
+    if args.verbose:
+        console_handler.setLevel(logging.DEBUG)
+
     content = Content(args)
     server = Connect(args)
     Actions(server["token"],server["xml_server"],args,content)
