@@ -28,7 +28,6 @@ formatter = logging.Formatter('%(levelname)s: [%(name)s] %(message)s')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-
 class ConfluenceSpace(object):
     def __init__(self, token, server):
         self.server = server
@@ -73,7 +72,6 @@ class ConfluenceGroup(object):
     def remove(self):
         self.server.confluence2.removeGroup(self.token,self.groupname,"confluence-users")
 
-
 class ConfluenceUser(object):
     def __init__(self,token,server,username):
         self.server = server
@@ -108,16 +106,14 @@ class ConfluenceUser(object):
 
     def remove_from_group(self,group):
         self.group = group
-        self.server.confluence2.removeUserFromGroup(self.token,self.username,self.group)   
+        self.server.confluence2.removeUserFromGroup(self.token,self.username,self.group)
 
     def change_password(self,password):
         self.password = password
-        self.server.confluence2.changeUserPassword(self.token,self.username,self.password)   
+        self.server.confluence2.changeUserPassword(self.token,self.username,self.password)
 
     def get_all(self):
         return self.server.confluence2.getActiveUsers(self.token, True)
-
-
 
 class ConfluencePage(object):
     def __init__(self,token,server,name,spaceKey,content,page_id="",label=""):
@@ -135,7 +131,7 @@ class ConfluencePage(object):
     def add(self,parent_id=0,content=""):
         self.logger.debug("Add page '{}'; label = [{}]".format(self.name, self.label))
         if content:
-            self.content = content 
+            self.content = content
         self.parent_id = parent_id
         self.newPost = {"title":self.name,"content":self.content,"space":self.spaceKey,"parentId":str(self.parent_id)}
         self.post_to_wiki = self.server.confluence2.storePage(self.token,self.newPost)
@@ -201,7 +197,6 @@ def error_out(error_message):
     print(error_message)
     exit()
 
-
 def Parser():
     parser = argparse.ArgumentParser(description="Confluence wiki API")
     parser.add_argument("-w", "--wikiurl", help="Wiki URL (only FQDN, no / and such)", required=True)
@@ -209,7 +204,7 @@ def Parser():
     parser.add_argument("-p", "--password", help="Login Password", required=True)
     parser.add_argument("-v", "--verbose", help="Enable debug logging", action="store_true")
     subparsers = parser.add_subparsers(dest="action")
-    
+
     parser_addpage = subparsers.add_parser('addpage', help='Add a page')
     parser_addpage.add_argument("-n", "--name", help="(New) page name", required=True)
     parser_addpage.add_argument("-P", "--parentpage", help="Parent page ID", default="0")
@@ -295,7 +290,7 @@ def Parser():
 
     parser_listusergroups = subparsers.add_parser('listusergroups', help='List groups user is in')
     parser_listusergroups.add_argument("-U", "--newusername", help="Username to perform action on.", required=True)
-    
+
     args = parser.parse_args()
     return args
 
@@ -323,9 +318,7 @@ def Connect(args):
         error_out("%d: %s" % ( err.faultCode, err.faultString))
     return {"token":token,"xml_server":xml_server}
 
-
 def Actions(token,xml_server,args,content):
-
     try:
         if args.action == "addpage":
             logger.debug('Command: "addpage", args.name = "{}", args.label = "{}"'.format(
@@ -334,13 +327,13 @@ def Actions(token,xml_server,args,content):
                 token,xml_server,args.name,args.spacekey,content,label=args.label)
             new_page.add(args.parentpage)
             print(new_page.get()["url"])
-   
+
         elif args.action == "updatepage":
             update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,label=args.label)
             update_page.update(content,args.parentpage)
             update_page.set_label()
             print(update_page.get()['url'])
-       
+
         elif args.action == "getpagecontent":
             get_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content).get_content()
             print(get_page)
@@ -360,22 +353,22 @@ def Actions(token,xml_server,args,content):
                 for page in all_pages:
                     print args.delimiter.join((
                      page['id'], page['space'], page['parentId'], page['title'], page['url']))
-       
+
         elif args.action == "removepage":
             removed_page = ConfluencePage(token,xml_server,args.name,args.spacekey,"").remove()
-       
+
         elif args.action == "addspace":
             add_space = ConfluenceSpace(token,xml_server).create(args.spacekey,args.name)
-       
+
         elif args.action == "removespace":
             remove_space = ConfluenceSpace(token,xml_server).remove(args.spacekey)
-       
+
         elif args.action == "listspaces":
             all_spaces = ConfluenceSpace(token,xml_server).get_all()
             for space in all_spaces:
                 print(("%s, %s, %s") % (
                  space['key'], space['name'], space['url']))
-       
+
         elif args.action == "getallpages":
             all_spaces = ConfluenceSpace(token,xml_server).get_all()
             for space in all_spaces:
@@ -397,19 +390,19 @@ def Actions(token,xml_server,args,content):
 
         elif args.action == "adduser":
             add_user = ConfluenceUser(token,xml_server,args.newusername).create(args.fullname,args.email,args.userpassword)
-       
+
         elif args.action == "removeuser":
             remove_user = ConfluenceUser(token,xml_server,args.newusername).remove()
-       
+
         elif args.action == "deactivateuser":
             deactivate_user = ConfluenceUser(token,xml_server,args.newusername).deactivate()
-       
+
         elif args.action == "reactivateuser":
             reactivate_user = ConfluenceUser(token,xml_server,args.newusername).reactivate()
-   
+
         elif args.action == "changeuserpassword":
             change_pass = ConfluenceUser(token,xml_server,args.newusername).change_password(args.userpassword)
-       
+
         elif args.action == "listuserinfo":
             user_info = ConfluenceUser(token,xml_server,args.newusername).get_info()
             for key,value in user_info.items():
@@ -445,7 +438,6 @@ def Actions(token,xml_server,args,content):
     except xmlrpclib.Fault as err:
         print(("Error: %d: %s") % (err.faultCode, err.faultString))
 
-
 def main():
     args = Parser()
 
@@ -456,4 +448,5 @@ def main():
     server = Connect(args)
     Actions(server["token"],server["xml_server"],args,content)
 
-main()
+if __name__ == '__main__':
+    main()
