@@ -214,6 +214,13 @@ def Parser():
     files_addpage.add_argument("-f", "--file", help="Read content from this file")
     files_addpage.add_argument("-S", "--stdin", help="Read content from STDIN", action="store_true")
 
+    parser_addpage = subparsers.add_parser('copypage', help='Copy a page')
+    parser_addpage.add_argument("-n", "--name", help="(New) page name", required=True)
+    parser_addpage.add_argument("-P", "--parentpage", help="Parent page ID", default="0")
+    parser_addpage.add_argument("-l", "--label", help="Page label", default="created_via_api")
+    parser_addpage.add_argument("-s", "--spacekey", help="Space Key", required=True)
+    parser_addpage.add_argument("-o", "--origin", help="Origin page name", required=True)
+
     parser_updatepage = subparsers.add_parser('updatepage', help='Update a page')
     parser_updatepage.add_argument("-n", "--name", help="Page name", required=True)
     parser_updatepage.add_argument("-s", "--spacekey", help="Space Key", required=True)
@@ -327,7 +334,12 @@ def Actions(token,xml_server,args,content):
                 token,xml_server,args.name,args.spacekey,content,label=args.label)
             new_page.add(args.parentpage)
             print(new_page.get()["url"])
-
+        elif args.action == "copypage":
+            content = ConfluencePage(token,xml_server,args.origin,args.spacekey,content).get_content()
+            copy_page = ConfluencePage(
+                token,xml_server,args.name,args.spacekey,content,label=args.label)
+            copy_page.add(args.parentpage)
+            print(copy_page.get()["url"])
         elif args.action == "updatepage":
             update_page = ConfluencePage(token,xml_server,args.name,args.spacekey,content,args.parentpage,label=args.label)
             update_page.update(content,args.parentpage)
